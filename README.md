@@ -42,6 +42,7 @@ output:
   - mask 'new_reg' for regressing out only 'object cueing' phase and 'moving' phase.
 
 3-2. Extract 'main task' scan
+
 3-3. 1st level GLM
 
 
