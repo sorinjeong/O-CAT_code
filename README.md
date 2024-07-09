@@ -18,7 +18,7 @@ output:
   - event_post_PV
   - num_sbj_events
 
- - data_bhv_plot
+- data_bhv_plot
   - accuracy plot
   - RT plot
   - bias plot
