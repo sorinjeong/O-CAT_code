@@ -36,6 +36,12 @@ output:
 - regressors_GLM_0709.mat
   - "reg_for_glm_ver1","reg_for_glm_ver2","sbj_id_list_38"
  
+
+# OCAT - Neural
+
+** ***spm으로 preprocessing*** **
+
+ 
 **3. code_glm_main_1st_SPM_batch_240619.m**
 
 3-1. make new glm regressor 
