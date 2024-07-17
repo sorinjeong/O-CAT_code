@@ -14,9 +14,9 @@ plot_save_output = 0; % if you want to save the behavior analysis result plot, t
 
 %% set path
 log_path_in = '../data\data_bhv_raw_total';
-log_path_out = '../data/new/data_bhv_log_table_38';
-plot_path_out = '../data/new/data_bhv_plot_38';
-curve_path_out = '../data/new/data_learning_curve_38';
+log_path_out = '../data/0716/data_bhv_log_table_38';
+plot_path_out = '../data/0716/data_bhv_plot_38';
+curve_path_out = '../data/0716/data_learning_curve_38';
 bids_path_in = 'D:\fMRI\OCAT_DIR\data\ocat_bids_1-38';
 addpath(genpath(bids_path_in));
 
@@ -55,7 +55,9 @@ if is_save_output == 1
     writetable(all_sbj_events,fullfile(path{2},'total', 'all_sbj_events.csv'));
     save(fullfile(path{2},'total','all_sbj_events') ,"all_sbj_events",'-mat');
     writetable(num_sbj_events,fullfile(path{2},'total','num_sbj_events.csv'));
-    save(fullfile(path{2},'total','num_sbj_events') ,"num_sbj_events",'-mat');
+    save(fullfile(path{2},'total','num_sbj_events.mat') ,"num_sbj_events");
+    %    save(fullfile('C:\Users\User\Desktop\JSR','num_sbj_events.mat'),"num_sbj_events"); %90번
+
     writetable(sbj_info_file,fullfile(path{2},'total','sbj_info.xlsx'));
 end
 
