@@ -488,6 +488,47 @@ for main_or_ODT = {'pre-ODT','post-ODT'}
     
 end
 
+%% plot
+for main_or_ODT = {'pre-ODT','post-ODT'}
+    
+    for diff_same={'diff','same'}
+        data = [];
+        for hpc_or_ctx={'hpc','ctx'}
+            if strcmp(main_or_ODT, 'main')
+                T=readtable(string(strcat(main_or_ODT,'_',ver,'_final_pattern_0725.xlsx')),'Sheet', strcat((diff_same{:}),'_',(hpc_or_ctx{:})));
+            else
+                T=readtable(string(strcat(main_or_ODT,'_final_pattern_0725.xlsx')),'Sheet', strcat(diff_same{:},'_',hpc_or_ctx{:}));
+            end
+            if strcmp(hpc_or_ctx,'hpc')
+                curr_names=roi_hpc_name(hpc_select);
+            else
+                curr_names=roi_ctx_name(ctx_select);
+            end
+            bi_names=strrep(curr_names(1:end/2),'Lt','Bi');
+            
+            roi=[curr_names,bi_names];
+            roi=strrep(roi,'_','-');
+            data = table2array(T);
+            
+            figure('position',[472,604,2063,894]);
+            hold on
+            bar(categorical(roi),mean(data));
+            title([main_or_ODT{:}, ': ',diff_same{:},'(',hpc_or_ctx{:},')'],'fontsize',20);
+            xlabel('Regions','fontsize',20);
+            ylabel('mean Values','fontsize',20);
+            ylim([0 0.3])
+            hold off
+            
+            if strcmp(main_or_ODT{:},'main')
+                plot_path=fullfile(root_path,'spm_prep_glm_0725',main_or_ODT{:},ver,'plot');
+            else
+                plot_path=fullfile(root_path,'spm_prep_glm_0725',main_or_ODT{:},'plot');
+            end
+            mkdir(plot_path)
+            saveas(gcf,[plot_path '\' diff_same{:} '_' hpc_or_ctx{:} '.png'])
+        end
+    end
+end
 
 
 
