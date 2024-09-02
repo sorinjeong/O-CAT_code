@@ -1,4 +1,4 @@
-function [sbj_perform, sbj_info, figs] = func_bhv_performance_plots(n_sbj, is_save_output, all_sbj_events, sbj_info_file_temp)
+function [sbj_perform, sbj_info, figs] = func_bhv_performance_plots(n_sbj, is_save_output, all_sbj_events, sbj_info_file_temp,plot_path_out)
 
 % Set event table
 events=all_sbj_events;
@@ -13,7 +13,7 @@ overall_RT=[];
 
 for i = 1:numel(fn_single); sbj_perform.(fn_single{i}) = []; end
 for i = 1:numel(fn_par); box_pl.(fn_par{i}) = []; end
-
+%% 
 data_group = struct("Correct",[],"Overall",[]);
 for sbj_i = 1: n_sbj
     c_sbj = strcat('sub', num2str(sbj_i, '%02.f'));
@@ -92,12 +92,21 @@ sbj_info.PASS=cell2mat(sbj_info.PASS);
 sbj_perform = struct2table(sbj_perform);
 sbj_perform = horzcat(sbj_info,sbj_perform);
 
-% save sbj_info
+%% save sbj_info
 % if is_save_output == 1
-plot_path_out='../data/data_bhv_plot';
 writetable(sbj_info,[plot_path_out '\sbj_info.csv']);
-
 writetable(sbj_perform,'sbj_perform.xlsx');
+
+accuracy_per_lap=[];
+accuracy_per_lap=repmat(1:8,1,n_sbj)';
+for i=1:n_sbj
+    c_sbj=sprintf('sub%.2d',i);
+    accuracy_per_lap((i-1)*8+1:i*8,2)=repelem(i,8)';
+    accuracy_per_lap((i-1)*8+1:i*8,3)=screening.(c_sbj).per_lap_accu';
+end
+tbl_accu_per_lap=array2table(accuracy_per_lap,'VariableNames',{'Lap','Subjects','Accuracy_lap'});
+save(fullfile(plot_path_out,'accuracy','accuracy_per_lap.mat'),'accuracy_per_lap');
+writetable(tbl_accu_per_lap,fullfile(plot_path_out,'accuracy','accuracy_per_lap.xlsx'));
 % end
 % Create figures
 figs = struct();
@@ -245,7 +254,7 @@ legend({'first-half','last-half','overall','','fail group'},'Location','northeas
 % coloring fail group
 ax = gca;
 ax.XTick = x;
-xTick = ax.XTick; ax.XLim = [0 32]; ax.XTickLabel = cellstr(num2str(x(:)));yLim = ylim;
+xTick = ax.XTick; ax.XLim = [0 n_sbj]; ax.XTickLabel = cellstr(num2str(x(:)));yLim = ylim;
 
 for i = 1:length(fail_idx)
     text(ax.XTick(fail_idx(i)), ax.YLim(1)-0.03, ax.XTickLabel{fail_idx(i)},...
@@ -388,33 +397,56 @@ RT_perLap=[];
 for i=0:7; RT_perLap = [RT_perLap;mean((overall_RT((i*4)+1:(i+1)*4,:)))];end
 RT_all_perLap = mean(RT_perLap,2);
 
-figs.plot7=figure;
+% figs.plot7=figure;
+% hold on
+% h=plot(RT_all_perLap,'Color','#013C58','Marker','o','MarkerFaceColor','#013C58','LineWidth',1.6);
+% % h = boxplot(RT_perLap');
+% set(h,{'linew'},{2})
+% set(h,{'Color'},{[0.0039 0.2353 0.3451]})
+% 
+% % Change the transparency of the box plot
+% h = findobj(gca,'Tag','Box');
+% for j=1:length(h)
+%     patch(get(h(j),'XData'),get(h(j),'YData'),[0.0039 0.2353 0.3451],'FaceAlpha',0.5);
+% end
+% 
+% % Change the line width of the outliers
+% h = findobj(gca,'Tag','Outliers');
+% set(h,{'MarkerSize'},{2})
+% ylim([0.5 1])
+% set(gca, 'box', 'off')
+% 
+% 
+% title('Change in RT over Laps','FontSize',14,'FontWeight','bold')
+% xlabel('Lap')
+% ylabel('RT(s)')
+% 
+% legend('Subject Average','Location','northeast')
+% 
+% box on; hold off
+
+% % % % % 에러바 + 가로 길이가 긴 직사각형 % % % % % 
+err_rt = std(RT_perLap,0,2)/sqrt(length(RT_perLap)); 
+
+% figs.plot7=figure('Position',[717,737,682,353]);
+
+figs.plot7=figure();
 hold on
-h=plot(RT_all_perLap,'Color','#013C58','Marker','o','MarkerFaceColor','#013C58','LineWidth',1.6);
-% h = boxplot(RT_perLap');
-set(h,{'linew'},{2})
+h=errorbar(RT_all_perLap,err_rt,'Color','#013C58','Marker','o','MarkerFaceColor','#013C58','MarkerSize',3,'LineWidth',2.5);
 set(h,{'Color'},{[0.0039 0.2353 0.3451]})
+ylim([0.5 1]); xlim([0.5 8.5]); 
+ax = gca; ax.FontSize = 12; ax.FontWeight = 'bold';
 
-% Change the transparency of the box plot
-h = findobj(gca,'Tag','Box');
-for j=1:length(h)
-    patch(get(h(j),'XData'),get(h(j),'YData'),[0.0039 0.2353 0.3451],'FaceAlpha',0.5);
-end
+title('Change in RT over Laps','FontSize',20,'FontWeight','bold')
+xlabel('Lap','FontSize',14,'FontWeight','bold')
+ylabel('RT(s)','FontSize',14,'FontWeight','bold')
 
-% Change the line width of the outliers
-h = findobj(gca,'Tag','Outliers');
-set(h,{'MarkerSize'},{2})
-ylim([0.5 1])
-set(gca, 'box', 'off')
+legend(sprintf('  Subjects(n=%d) ',n_sbj),'Location','northeast','box','off')
+
+box off; hold off
 
 
-title('Change in RT over Laps','FontSize',14,'FontWeight','bold')
-xlabel('Lap')
-ylabel('RT(s)')
 
-legend('Subject Average','Location','northeast')
-
-box on; hold off
 
 
 %% 피험자들의 Accuracy 변화를 볼 수 있는 그래프
@@ -517,36 +549,16 @@ legend('Subject Average','Location','southeast')
 box on; hold off
 
 %%
-% Change in accuracy over Laps _ pass+fail
-accu_perLap=mean(box_pl.per_lap_accu,2);
-
-figs.plot9=figure;
-hold on
-h=plot(accu_perLap,'Color','#F5564E','Marker','o','MarkerFaceColor','#F5564E','LineWidth',1.6);
-set(h,{'linew'},{1.6})
-set(h,{'Color'},{[0.9608 0.3373 0.3059]})
-ylim([0 1])
-
-
-title('Change in Accuracy over Laps','FontSize',14,'FontWeight','bold')
-xlabel('Lap')
-ylabel('Accuracy')
-
-legend('Subject Average','Location','southeast')
-
-box on; hold off
-
-
-%--> 에러바 추가된 버전의 코드
+% % Change in accuracy over Laps _ pass+fail
 % accu_perLap=mean(box_pl.per_lap_accu,2);
-% e = std(box_pl.per_lap_accu,0,2); % Compute standard deviation
 % 
 % figs.plot9=figure;
 % hold on
-% h=errorbar(accu_perLap,e,'Color','#F5564E','Marker','o','MarkerFaceColor','#F5564E','LineWidth',1.6);
+% h=plot(accu_perLap,'Color','#F5564E','Marker','o','MarkerFaceColor','#F5564E','LineWidth',1.6);
 % set(h,{'linew'},{1.6})
 % set(h,{'Color'},{[0.9608 0.3373 0.3059]})
 % ylim([0 1])
+% 
 % 
 % title('Change in Accuracy over Laps','FontSize',14,'FontWeight','bold')
 % xlabel('Lap')
@@ -555,6 +567,50 @@ box on; hold off
 % legend('Subject Average','Location','southeast')
 % 
 % box on; hold off
+
+
+% --> 에러바 추가된 버전의 코드
+accu_perLap=mean(box_pl.per_lap_accu,2);
+e = std(box_pl.per_lap_accu,0,2)/sqrt(length(box_pl.per_lap_accu)); % Compute standard deviation
+
+% % % % % % 높이가 좀 있는 직사각형 % % % % % 
+% figs.plot9=figure('Position',[845,601,682,545]);
+% hold on
+% h=errorbar(accu_perLap,e,'Color','#F5564E','Marker','o','MarkerFaceColor','#F5564E','LineWidth',2.5);
+% % set(h,{'linew'},{1.6})
+% set(h,{'Color'},{[0.9608 0.3373 0.3059]})
+% ylim([0 1]); xlim([0.5 8.5]); ax = gca;
+% ax.FontSize = 14; ax.FontWeight = 'bold';
+% 
+% title('Change in Accuracy over Laps','FontSize',24,'FontWeight','bold')
+% xlabel('Lap','FontSize',18,'FontWeight','bold')
+% ylabel('Accuracy','FontSize',18,'FontWeight','bold')
+% 
+% % legend(' Subjects Average','Location','southeast','box','off')
+% % text(7.5, 0.12, '(n=38)', 'FontSize', 12)
+% legend('  Subjects(n=38) ','Location','southeast','box','off')
+% 
+% box off; hold off
+
+% % % % % 가로 길이가 긴 직사각형 % % % % % 
+figs.plot9=figure('Position',[717,737,682,353]);
+figs.plot9=figure();
+
+hold on
+h=errorbar(accu_perLap,e,'Color','#F5564E','Marker','o','MarkerFaceColor','#F5564E','MarkerSize',3,'LineWidth',2.5);
+set(h,{'Color'},{[0.9608 0.3373 0.3059]})
+ylim([0 1]); xlim([0.5 8.5]); ax = gca;
+ax.FontSize = 12; ax.FontWeight = 'bold';
+
+title('Change in Accuracy over Laps','FontSize',20,'FontWeight','bold')
+xlabel('Lap','FontSize',14,'FontWeight','bold')
+ylabel('Accuracy','FontSize',14,'FontWeight','bold')
+
+% legend(' Subjects Average','Location','southeast','box','off')
+% text(7.5, 0.12, '(n=38)', 'FontSize', 12)
+legend(sprintf('  Subjects(n=%d) ',n_sbj),'Location','southeast','box','off')
+
+box off; hold off
 
 
 
