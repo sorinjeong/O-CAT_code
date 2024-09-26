@@ -509,8 +509,17 @@ if ~strcmp(m_o{:},'main')
 end
 
 %% early/late/fail grouping
+if contains(main_or_ODT,'ODT')
+    if contains(main_or_ODT,'main')
+        m_o_O = {'post-ODT','pre-ODT','post-pre_ODT', 'main'}; % 'main', 'post-ODT','pre-ODT','post-pre_ODT'
+    else
+        m_o_O = {'post-ODT','pre-ODT','post-pre_ODT'};
+    end
+else
+    m_o_O = {'main'};
+end
 
-for m_o = {'post-ODT','pre-ODT','post-pre_ODT'} % 'main', 'post-ODT','pre-ODT','post-pre_ODT'
+for m_o = m_o_O 
     if strcmp(m_o{:},'main')
         cd([root_path '\pattern_similarity\main'])
     else
