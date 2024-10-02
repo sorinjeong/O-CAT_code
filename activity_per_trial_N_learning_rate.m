@@ -8,10 +8,10 @@ load('activ.mat')
 acq_95_41(exclud_sbj)=[];
 
 dtw_output = struct;
-dtw_dist=struct;
+% dtw_dist=struct;
 max_len = 0;
 
-hpc_or_ctx={'ctx'};     %{'hpc','ctx'}
+hpc_or_ctx={'hpc'};     %{'hpc','ctx'}
 
 curr_names=fieldnames(activ.(hpc_or_ctx{:}));
 curr_names=curr_names(~strcmp(curr_names,'trials'));
@@ -49,7 +49,7 @@ for perform_group={'all','early','late','fail'}
             max_len = max(max_len, length(ix));
             max_len = max(max_len, length(iy));
         end
-        dtw_dist.(perform_group{:}).(curr_names{r})=temp_dist;
+        dtw_dist.(hpc_or_ctx{:}).(perform_group{:}).(curr_names{r})=temp_dist;
         
         aligned_x_all = nan(numel(sbj_group), max_len);
         aligned_y_all = nan(numel(sbj_group), max_len);
@@ -80,21 +80,34 @@ for perform_group={'all','early','late','fail'}
         end
     end
 end
+save('G:/JSR/240922_new_fmri/Activity/DTW/dtw_dist.mat','dtw_dist');
+
 
 %% plotting
 %% plotting original signals
 
-plot_count = 0;
-figure_index = 1;
+
 for perform_group={'all','early','late','fail'}
+    if strcmp(perform_group,'all')
+            idx=1:numel(sbj_id_list_41);
+        elseif strcmp(perform_group,'early')
+            idx=idx_early;
+        elseif strcmp(perform_group,'late')
+            idx=idx_late;
+        elseif strcmp(perform_group,'fail')
+            idx=idx_fail;
+        end
+    
+    plot_count = 0;
+figure_index = 1;
     for r=1:numel(curr_names)
         
         
-        [h_e_l,p_e_l]=ttest2(dtw_dist.early.(curr_names{r}), dtw_dist.late.(curr_names{r}));
+        [h_e_l,p_e_l]=ttest2(dtw_dist.(hpc_or_ctx{:}).early.(curr_names{r}), dtw_dist.(hpc_or_ctx{:}).late.(curr_names{r}));
         fprintf('Early vs Late DTW distance t-test: h = %d, p = %.4f\n', h_e_l, p_e_l);
-        [h_e_f,p_e_f]=ttest2(dtw_dist.early.(curr_names{r}), dtw_dist.fail.(curr_names{r}));
+        [h_e_f,p_e_f]=ttest2(dtw_dist.(hpc_or_ctx{:}).early.(curr_names{r}), dtw_dist.(hpc_or_ctx{:}).fail.(curr_names{r}));
         fprintf('Early vs Fail DTW distance t-test: h = %d, p = %.4f\n', h_e_f, p_e_f);
-        [h_l_f,p_l_f]=ttest2(dtw_dist.late.(curr_names{r}), dtw_dist.fail.(curr_names{r}));
+        [h_l_f,p_l_f]=ttest2(dtw_dist.(hpc_or_ctx{:}).late.(curr_names{r}), dtw_dist.(hpc_or_ctx{:}).fail.(curr_names{r}));
         fprintf('Late vs Fail DTW distance t-test: h = %d, p = %.4f\n', h_l_f, p_l_f);
         if p_e_l < 0.1 || p_e_f < 0.1 || p_l_f < 0.1
             fprintf('p-valueeeeeeeeeeeeee!!!!!!!!!!!!!!!!\n')
@@ -110,7 +123,7 @@ for perform_group={'all','early','late','fail'}
         % Plot original signals
         subplot(3, 2, mod(plot_count-1, 6) + 1);
         yyaxis left;
-        plot(mean(activ.(hpc_or_ctx{:}).(curr_names{r}), 1), '-o');
+        plot(mean(activ.(hpc_or_ctx{:}).(curr_names{r})(idx, :), 1), '-o'); 
         ylabel('activity');
         
         yyaxis right;
@@ -174,7 +187,6 @@ for perform_group={'all','early','late','fail'}
         save_folder=sprintf('G:/JSR/240922_new_fmri/Activity/DTW/%s_sub',perform_group{:});
         mkdir(save_folder)
         saveas(gcf, sprintf('%s/DTW_%s_%d.png', save_folder,hpc_or_ctx{:},figure_index-1));
-        
     end
 end
 
@@ -187,16 +199,26 @@ normalize = @(x) (x - min(x)) / (max(x) - min(x));
 smooth = @(x) movmean(x, 5); % 이동 평균을 사용한 스무딩 (5씩 이동)
 
 
-plot_count = 0;
-figure_index = 1;
+
 for perform_group={'all','early','late','fail'}
+     if strcmp(perform_group,'all')
+            idx=1:numel(sbj_id_list_41);
+        elseif strcmp(perform_group,'early')
+            idx=idx_early;
+        elseif strcmp(perform_group,'late')
+            idx=idx_late;
+        elseif strcmp(perform_group,'fail')
+            idx=idx_fail;
+        end
+    plot_count = 0;
+figure_index = 1;
     for r=1:numel(curr_names)
         
-        [h_e_l,p_e_l]=ttest2(dtw_dist.early.(curr_names{r}), dtw_dist.late.(curr_names{r}));
+        [h_e_l,p_e_l]=ttest2(dtw_dist.(hpc_or_ctx{:}).early.(curr_names{r}), dtw_dist.(hpc_or_ctx{:}).late.(curr_names{r}));
         fprintf('Early vs Late DTW distance t-test: h = %d, p = %.4f\n', h_e_l, p_e_l);
-        [h_e_f,p_e_f]=ttest2(dtw_dist.early.(curr_names{r}), dtw_dist.fail.(curr_names{r}));
+        [h_e_f,p_e_f]=ttest2(dtw_dist.(hpc_or_ctx{:}).early.(curr_names{r}), dtw_dist.(hpc_or_ctx{:}).fail.(curr_names{r}));
         fprintf('Early vs Fail DTW distance t-test: h = %d, p = %.4f\n', h_e_f, p_e_f);
-        [h_l_f,p_l_f]=ttest2(dtw_dist.late.(curr_names{r}), dtw_dist.fail.(curr_names{r}));
+        [h_l_f,p_l_f]=ttest2(dtw_dist.(hpc_or_ctx{:}).late.(curr_names{r}), dtw_dist.(hpc_or_ctx{:}).fail.(curr_names{r}));
         fprintf('Late vs Fail DTW distance t-test: h = %d, p = %.4f\n', h_l_f, p_l_f);
         if p_e_l < 0.1 || p_e_f < 0.1 || p_l_f < 0.1
             fprintf('p-valueeeeeeeeeeeeee!!!!!!!!!!!!!!!!\n')
@@ -212,7 +234,7 @@ for perform_group={'all','early','late','fail'}
         % Plot original signals
         subplot(3, 2, mod(plot_count-1, 6) + 1);
         yyaxis left;
-        plot(smooth(normalize(mean(activ.(hpc_or_ctx{:}).(curr_names{r}), 1))), '-o');
+        plot(smooth(normalize(mean(activ.(hpc_or_ctx{:}).(curr_names{r})(idx, :), 1))), '-o');
         ylabel('activity');
         
         yyaxis right;
