@@ -21,8 +21,8 @@ function [final_pat]=func_save_pat(T, T_L, T_R, idx_group, group_name, diff_same
 writetable(T(idx_group,:), string(strcat(group_name, '_', diff_same, '_', hpc_or_ctx, '_', pp, '_pattern.xlsx')), 'Sheet', bi_names{r});
 writetable(T_L(idx_group,:), string(strcat(group_name, '_', diff_same, '_', hpc_or_ctx, '_', pp, '_pattern.xlsx')), 'Sheet', curr_names{r});
 writetable(T_R(idx_group,:), string(strcat(group_name, '_', diff_same, '_', hpc_or_ctx, '_', pp, '_pattern.xlsx')), 'Sheet', curr_names{r + (numel(curr_names) / 2)});
-pat.perform.(group_name).(pp).(hpc_or_ctx).(diff_same).(bi_names{r})=T;
-pat.perform.(group_name).(pp).(hpc_or_ctx).(diff_same).(curr_names{r})=T_L;
-pat.perform.(group_name).(pp).(hpc_or_ctx).(diff_same).(curr_names{r + (numel(curr_names) / 2)})=T_R;
+pat.perform.(group_name).(pp).(hpc_or_ctx).(diff_same).(bi_names{r})=T(idx_group,:);
+pat.perform.(group_name).(pp).(hpc_or_ctx).(diff_same).(curr_names{r})=T_L(idx_group,:);
+pat.perform.(group_name).(pp).(hpc_or_ctx).(diff_same).(curr_names{r + (numel(curr_names) / 2)})=T_R(idx_group,:);
 final_pat=pat;
 end
