@@ -42,15 +42,18 @@ ctx_select=1:30;
 %     %     end
 %     %     end
 %
-%     %% rename_ trial
+
+singletrial_path=fullfile(root_path, 'glm_new_1111','main','single_trial');
 
 for sbj_i=1:numel(sbj_id_list)
     sbj_n=sprintf('sub_%d',sbj_id_list(sbj_i));disp(sbj_n)
-    singletrial_path=fullfile(root_path, 'glm_new_1111','main','single_trial');
     
     
     pp='obj_';
-    sbj_OC=dir(fullfile(singletrial_path,sbj_n,'betas','Sess001',strcat(pp,'*_*')));
+    %     sbj_OC=dir(fullfile(singletrial_path,sbj_n,'betas','Sess001',strcat(pp,'*_*')));
+    %11/15 수정 윗줄 코드 실수;;;
+        sbj_OC=dir(fullfile(singletrial_path,sbj_n,'*.nii'));
+
     roc=cellfun(@(x) extractBetween(x,'obj_','_0'),{sbj_OC.name});
     d=reg_1111{1, sbj_i}.trial_detail;
     un=unique(roc);
@@ -167,12 +170,12 @@ save(string(fullfile(root_path,'pattern_similarity',m_o,'OC_pattern.mat')),"OC_p
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% % %%%%%%%%%%%%%%%%%%% 이 아래 OC pattern에 맞춰서 다시 수정하기!!!
+%%%%%%%%%%%%%%%%%%%  REWARDING  %%%%%%%%%%%%%%%%%%%
 %% rewarding!!!!
 rewarding = struct;
 
-%% input
-cd('G:\JSR\241104_new_fmri\pattern_similarity\main')
+% input
+cd('G:\JSR\241104_new_fmri\pattern_similarity\main_1111')
 mkdir('./rewarding');
 
 
@@ -435,7 +438,7 @@ for h_or_b={'half','block'}
     end
 end
 
-%% rewarding structure 만들기 (총정리)
+% rewarding structure 만들기 (총정리)
 reward=struct;
 for perf = {'EARLY', 'LATE', 'FAIL'}
     for hcc = {'HIT', 'CORR_REJ', 'contrast'}
@@ -456,8 +459,9 @@ for perf = {'EARLY', 'LATE', 'FAIL'}
     end
 end
 save('./rewarding/reward.mat','reward');
-%% Plotting
-disp(pwd); mkdir('./figures/')
+
+% rewarding Plotting
+disp(pwd); mkdir('./rewarding/figures/')
 
 for h_or_b = {'half', 'block'}
     for perf = {'EARLY', 'LATE', 'FAIL'}
@@ -507,7 +511,7 @@ for h_or_b = {'half', 'block'}
                         box off; hold off;
                     end
                     
-                    saveas(gcf, strcat('./figures/', sgtitle_name, '_', num2str(plot_idx), '.png'));
+                    saveas(gcf, strcat('./rewarding/figures/', sgtitle_name, '_', num2str(plot_idx), '.png'));
                     %                     close(gcf);
                 end
             end
@@ -552,6 +556,12 @@ for hpc_or_ctx={'hpc','ctx'}
             c1_idx=find(cell2mat(curr_s_r(3,:))==curr_c(1));
             c2_idx=find(cell2mat(curr_s_r(3,:))==curr_c(2));
             
+              forest_idx=find(cellfun(@(x) x == 1, curr_s_r(4,:)));
+              city_idx=find(cellfun(@(x) x == 2, curr_s_r(4,:)));
+                        
+              if ~isempty(intersect(forest_idx,city_idx))
+            warning('%s: wrong context indexing!!!',sbj_n)
+              end
             %% same
             
             bulk_same_f=bulk_corr(f1_idx,f2_idx);
@@ -653,10 +663,12 @@ end
 
 %
 %% bilateral region
+% cd('G:\JSR\241104_new_fmri\pattern_similarity\main')
 pat=struct;
-% % 비교용: 0922
-% cd('G:\JSR\241104_new_fmri\pattern_similarity\main_0922')
-% addpath('G:\JSR\240922_new_fmri\pattern_similarity\main')
+
+% % % 비교용: 0922
+% path=('G:\JSR\241104_new_fmri\pattern_similarity\main_0922')
+% cd('G:\JSR\240922_new_fmri\pattern_similarity\main\test_good');
 
 for diff_same={'diff','same'}
     data = [];
@@ -714,7 +726,6 @@ save('now.mat','now')
 save('final_pat.mat','final_pat','idx_good','idx_early','idx_late','idx_fail')
 
 %% in main, same-diff
-
 for hpc_or_ctx={'hpc','ctx'}
     if strcmp(hpc_or_ctx,'hpc')
         curr_names=roi_hpc_name(hpc_select);
@@ -738,7 +749,7 @@ for hpc_or_ctx={'hpc','ctx'}
             
             T = array2table(s_d_ptn, 'VariableNames', same_ptn.Properties.VariableNames);
             writetable(T,string(strcat('same-diff_',(hpc_or_ctx{:}),'_',(pp{:}), '_pattern.xlsx')),'Sheet',sheets(shts));
-            pat.same_diff.(hpc_or_ctx{:}).(diff_same{:})=T;
+            pat.same_diff.(hpc_or_ctx{:}).(pp{:})=T;
 
         end
     end
@@ -747,12 +758,31 @@ final_pat=pat;
 save('final_pat.mat','final_pat','idx_good','idx_early','idx_late','idx_fail')
 
 %% plot
-% curr_names= {'L.Hp','L.DGCA3','L.CA1','R.Hp','R.DGCA3','R.CA1','Bi.Hp','Bi.DGCA3','Bi.CA1'};
 
 disp(pwd); mkdir('./figures/')
 func_pat_plot(final_pat.perform)
 
 
+%% ROI only
+load('final_pat.mat')
+pat=final_pat;
+perf_group = fieldnames(pat.perform)';
+
+
+for pp=perf_group
+    for diff_same={'diff','same'}
+        for roi_name={'Bi_DGCA3','Bi_CA1'}
+            T=pat.perform.(pp{:}).block.hpc.(diff_same{:}).(roi_name{:});
+            writetable(T,'ROI_block_PS.xlsx','Sheet',strcat(pp{:},'_',diff_same{:},'_',roi_name{:}))
+        end
+    end
+end
+            
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% functions
 function func_pat_plot(pat_in)
 
@@ -815,7 +845,7 @@ for g = 1:length(group_names)
                     end
                     
                     saveas(gcf, strcat('./figures/', sgtitle_name, '_', num2str(plot_idx), '.png'));
-                    %                     close(gcf);
+                                        close(gcf);
                 end
             end
         end
@@ -831,8 +861,8 @@ function [final_pat]=func_save_pat(T, T_L, T_R, idx_group, group_name, diff_same
 writetable(T(idx_group,:), string(strcat(group_name, '_', diff_same, '_', hpc_or_ctx, '_', pp, '_pattern.xlsx')), 'Sheet', bi_names{r});
 writetable(T_L(idx_group,:), string(strcat(group_name, '_', diff_same, '_', hpc_or_ctx, '_', pp, '_pattern.xlsx')), 'Sheet', curr_names{r});
 writetable(T_R(idx_group,:), string(strcat(group_name, '_', diff_same, '_', hpc_or_ctx, '_', pp, '_pattern.xlsx')), 'Sheet', curr_names{r + (numel(curr_names) / 2)});
-pat.perform.(group_name).(pp).(hpc_or_ctx).(diff_same).(bi_names{r})=T;
-pat.perform.(group_name).(pp).(hpc_or_ctx).(diff_same).(curr_names{r})=T_L;
-pat.perform.(group_name).(pp).(hpc_or_ctx).(diff_same).(curr_names{r + (numel(curr_names) / 2)})=T_R;
+pat.perform.(group_name).(pp).(hpc_or_ctx).(diff_same).(bi_names{r})=T(idx_group,:);
+pat.perform.(group_name).(pp).(hpc_or_ctx).(diff_same).(curr_names{r})=T_L(idx_group,:);
+pat.perform.(group_name).(pp).(hpc_or_ctx).(diff_same).(curr_names{r + (numel(curr_names) / 2)})=T_R(idx_group,:);
 final_pat=pat;
 end
